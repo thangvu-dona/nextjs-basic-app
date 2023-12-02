@@ -9,6 +9,17 @@ export interface PostPageProps {
 export default function PostDetailPage({ post }: PostPageProps) {
   const router = useRouter();
 
+  // when fallback in function `getStaticPath` set true, we can do below to improve UX(show Loading...) when data take time for fetching
+  if (router.isFallback) {
+    return (
+      <div
+        style={{ fontSize: "2rem", textAlign: "center", fontWeight: "bold" }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
   if (!post) return;
 
   return (
@@ -32,7 +43,8 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   return {
     paths: data.data.map((post: any) => ({ params: { postId: post.id } })),
-    fallback: false,
+    // fallback: false,
+    fallback: true, // will render new resource(HTML) if it not available in cache files(SSG)
   };
 };
 
@@ -54,5 +66,6 @@ export const getStaticProps: GetStaticProps<PostPageProps> = async (
     props: {
       post: data,
     },
+    revalidate: 5, // will be update and render(HTML) the page that user acessed to new version in background
   };
 };
