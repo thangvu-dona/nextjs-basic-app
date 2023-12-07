@@ -1,6 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import httpProxy from 'http-proxy'
 import type { NextApiRequest, NextApiResponse } from 'next'
+import Cookies from 'cookies'
 
 // type Data = {
 //   name: string
@@ -20,16 +21,29 @@ export const config = {
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse<any>) {
-  // dont send cookies to API server
-  req.headers.cookie = ''
+  return new Promise((resolve) => {
+    // convert cookies to header Authorization
+    const cookies = new Cookies(req, res)
+    const accessToken = cookies.get('access_token')
+    if (accessToken) {
+      req.headers.Authorization = `Bearer ${accessToken}`
+    }
 
-  // /api/students/
-  // https://js-post-api.herokuapp.com/api/students
+    // dont send cookies to API server
+    req.headers.cookie = ''
 
-  proxy.web(req, res, {
-    target: process.env.API_URL,
-    changeOrigin: true,
-    selfHandleResponse: false,
+    // /api/students/
+    // https://js-post-api.herokuapp.com/api/students
+
+    proxy.web(req, res, {
+      target: process.env.API_URL,
+      changeOrigin: true,
+      selfHandleResponse: false,
+    })
+
+    proxy.once('proxyRes', () => {
+      resolve(true)
+    })
   })
 
   // res.status(200).json({ name: 'PATH - Match all here' })
